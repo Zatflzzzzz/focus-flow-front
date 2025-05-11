@@ -1,0 +1,49 @@
+<div class="container">
+  <h2>Мои проекты</h2>
+
+  <div class="controls">
+    <button
+      *ngIf="!showCreateForm"
+      (click)="showCreateForm = true"
+      class="btn btn-primary"
+    >
+      + Создать проект
+    </button>
+
+    <div *ngIf="showCreateForm" class="create-form">
+      <input
+        type="text"
+        [(ngModel)]="newProjectName"
+        placeholder="Название проекта"
+        class="form-input"
+      >
+      <div class="form-actions">
+        <button (click)="showCreateForm = false" class="btn btn-secondary">
+          Отмена
+        </button>
+        <button (click)="createProject()" class="btn btn-primary">
+          Создать
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="projects-grid">
+    <div
+      *ngFor="let project of projects"
+      (click)="navigateToProject(project.id)"
+      class="project-card"
+    >
+      <h3>{{ project.name }}</h3>
+      <div class="project-meta">
+        <span>Колонок: {{ project.taskStates.length }}</span>
+        <button
+          (click)="deleteProject(project.id, $event)"
+          class="btn btn-danger"
+        >
+          Удалить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

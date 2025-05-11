@@ -1,0 +1,280 @@
+<div class="container">
+  <div class="notifications-container">
+    <div *ngFor="let notification of notificationService.notifications"
+         class="notification notification-{{notification.type}}">
+      {{notification.message}}
+    </div>
+  </div>
+
+  <!-- Шапка проекта -->
+  <div *ngIf="project; else notFound" class="project-header">
+    <div class="header-content">
+      <h2>{{ project.name }}</h2>
+      <button (click)="showEditProjectModal = true" class="btn btn-edit">
+        <i class="edit-icon"></i>
+      </button>
+    </div>
+
+    <div class="meta">
+      <span>Создан: {{ project.createdAt | date:'dd.MM.yyyy' }}</span>
+      <span>Обновлен: {{ project.updatedAt | date:'dd.MM.yyyy' }}</span>
+    </div>
+
+    <button (click)="showTaskStateModal = true" class="btn btn-add">
+      Добавить колонку
+    </button>
+  </div>
+
+  <!-- Колонки задач -->
+  <ng-container *ngIf="project">
+    <h3 *ngIf="project.taskStates.length > 0">Колонки задач</h3>
+
+    <div *ngIf="project.taskStates.length > 0" class="task-states">
+      <div *ngFor="let state of project.taskStates" class="task-state">
+        <div class="state-header">
+          <h4>{{ state.name }} ({{ layoutMap[state.typeOfLayout] }})</h4>
+          <div class="state-actions">
+            <button (click)="openEditTaskStateModal(state)" class="btn btn-edit">
+              Редактировать
+            </button>
+            <button (click)="deleteTaskState(state.id)" class="btn btn-delete">
+              Удалить
+            </button>
+          </div>
+        </div>
+
+        <button (click)="openTaskModal(state)" class="btn btn-add-task">
+          Добавить задачу
+        </button>
+
+        <div *ngIf="state.tasks && state.tasks.length > 0" class="tasks-list">
+          <div *ngFor="let task of state.tasks"
+               class="task task-{{task.priority.toLowerCase()}}-priority"
+               (click)="openTaskDetails(task)">
+            <div class="task-content">
+              <h5 class="task-title">{{ task.title }}</h5>
+              <p class="task-description">{{ task.description || 'Нет описания' }}</p>
+
+              <div class="task-info">
+                <span class="task-category">{{ categoryMap[task.category] }}</span>
+                <span class="task-priority priority-{{task.priority.toLowerCase()}}">
+                  {{ priorityMap[task.priority] }}
+                </span>
+              </div>
+
+              <div *ngIf="task.deadline" class="deadline">
+                <span class="deadline-icon"></span> {{ task.deadline | date:'dd.MM.yyyy' }}
+              </div>
+            </div>
+
+            <div class="task-actions">
+              <button
+                (click)="deleteTask(state.id, task.id, $event)"
+                class="btn btn-delete btn-sm"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!state.tasks || state.tasks.length === 0" class="empty-tasks">
+          Нет задач в этой колонке
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Проект не найден -->
+  <ng-template #notFound>
+    <div class="empty-state">
+      <h3>Проект не найден</h3>
+      <p>Запрошенный проект не существует или был удален</p>
+    </div>
+  </ng-template>
+
+  <a routerLink="/" class="back-link">← Назад к списку проектов</a>
+
+  <!-- Модальное окно редактирования проекта -->
+  <div *ngIf="showEditProjectModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Редактировать проект</h3>
+
+      <div class="form-group">
+        <label>Название проекта</label>
+        <input type="text" [(ngModel)]="editProjectData.name" class="form-input">
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="showEditProjectModal = false" class="btn btn-cancel">
+          Отмена
+        </button>
+        <button (click)="updateProject()" class="btn btn-confirm">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно добавления колонки -->
+  <div *ngIf="showTaskStateModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Добавить колонку</h3>
+
+      <div class="form-group">
+        <label>Название колонки</label>
+        <input type="text" [(ngModel)]="newTaskState.name" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Тип отображения</label>
+        <select [(ngModel)]="newTaskState.layout" class="form-select">
+          <option *ngFor="let layout of layouts" [value]="layout">
+            {{ layoutMap[layout] }}
+          </option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="showTaskStateModal = false; resetTaskStateForm()" class="btn btn-cancel">
+          Отмена
+        </button>
+        <button (click)="addTaskState()" class="btn btn-confirm">
+          Добавить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно редактирования колонки -->
+  <div *ngIf="showEditTaskStateModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Редактировать колонку</h3>
+
+      <div class="form-group">
+        <label>Название колонки</label>
+        <input type="text" [(ngModel)]="editTaskState.name" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Тип отображения</label>
+        <select [(ngModel)]="editTaskState.layout" class="form-select">
+          <option *ngFor="let layout of layouts" [value]="layout">
+            {{ layoutMap[layout] }}
+          </option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="showEditTaskStateModal = false" class="btn btn-cancel">
+          Отмена
+        </button>
+        <button (click)="updateTaskState()" class="btn btn-confirm">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно добавления задачи -->
+  <div *ngIf="showTaskModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Добавить задачу</h3>
+
+      <div class="form-group">
+        <label>Название задачи</label>
+        <input type="text" [(ngModel)]="newTask.title" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Описание</label>
+        <textarea [(ngModel)]="newTask.description" class="form-textarea"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Приоритет</label>
+          <select [(ngModel)]="newTask.priority" class="form-select">
+            <option *ngFor="let priority of priorities" [value]="priority">
+              {{ priorityMap[priority] }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Категория</label>
+          <select [(ngModel)]="newTask.category" class="form-select">
+            <option *ngFor="let category of categories" [value]="category">
+              {{ categoryMap[category] }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Дедлайн</label>
+        <input type="date" [(ngModel)]="newTask.deadline" class="form-input">
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="showTaskModal = false; resetTaskForm()" class="btn btn-cancel">
+          Отмена
+        </button>
+        <button (click)="addTask()" class="btn btn-confirm">
+          Добавить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно просмотра/редактирования задачи -->
+  <div *ngIf="showTaskDetailsModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Детали задачи</h3>
+
+      <div class="form-group">
+        <label>Название задачи</label>
+        <input type="text" [(ngModel)]="editTask.title" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Описание</label>
+        <textarea [(ngModel)]="editTask.description" class="form-textarea"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Приоритет</label>
+          <select [(ngModel)]="editTask.priority" class="form-select">
+            <option *ngFor="let priority of priorities" [value]="priority">
+              {{ priorityMap[priority] }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Категория</label>
+          <select [(ngModel)]="editTask.category" class="form-select">
+            <option *ngFor="let category of categories" [value]="category">
+              {{ categoryMap[category] }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Дедлайн</label>
+        <input type="date" [(ngModel)]="editTask.deadline" class="form-input">
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="showTaskDetailsModal = false" class="btn btn-cancel">
+          Закрыть
+        </button>
+        <button (click)="updateTask()" class="btn btn-confirm">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

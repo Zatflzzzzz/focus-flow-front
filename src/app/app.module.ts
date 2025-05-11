@@ -1,16 +1,28 @@
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import {NgModule} from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {CommonModule} from '@angular/common';
+import {RouterModule} from '@angular/router';
+import {FormsModule} from '@angular/forms';
 
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
+import {AppComponent} from './app.component';
+import {ProjectsListComponent} from './projects/projects-list/projects-list.component';
+import {ProjectDetailsComponent} from './projects/project-details/project-details.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    ProjectsListComponent,
+    ProjectDetailsComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    CommonModule,
+    FormsModule,
+    RouterModule.forRoot([
+      { path: '', component: ProjectsListComponent },
+      { path: 'projects/:id', component: ProjectDetailsComponent },
+      { path: '**', redirectTo: '' }
+    ])
   ],
   providers: [],
   bootstrap: [AppComponent]
