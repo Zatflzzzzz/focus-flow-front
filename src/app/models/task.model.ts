@@ -1,6 +1,5 @@
 import {Category} from './enums/category.enum';
 import {Priority} from './enums/priority.enum';
-import {TaskState} from './task-state.model';
 
 
 export interface Task {
@@ -10,9 +9,9 @@ export interface Task {
   deadline: Date;
   category: Category;
   priority: Priority;
-  higherPriorityTask?: Task;
-  lowerPriorityTask?: Task;
-  taskState: TaskState;
+  higherPriorityTaskId?: number;
+  lowerPriorityTaskId?: number;
+  taskStateId: number;
   updatedAt: Date;
   createdAt: Date;
 }

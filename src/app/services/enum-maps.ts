@@ -1,6 +1,6 @@
-import {Category} from '../projects/models/enums/category.enum';
-import {Priority} from '../projects/models/enums/priority.enum';
-import {Layouts} from '../projects/models/enums/layouts.enum';
+import {Category} from '../models/enums/category.enum';
+import {Priority} from '../models/enums/priority.enum';
+import {Layouts} from '../models/enums/layouts.enum';
 
 export const CategoryMap: Record<Category, string> = {
   WORK: 'Работа',

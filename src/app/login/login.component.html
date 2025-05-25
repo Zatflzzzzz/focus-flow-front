@@ -1,0 +1,51 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Вход в систему</h2>
+      <p>Управляйте своими проектами эффективно</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()" class="auth-form" novalidate>
+      <div class="form-group">
+        <label for="username">Имя пользователя</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-input"
+          placeholder="Введите ваше имя пользователя"
+          [class.invalid]="username?.invalid && (username?.dirty)"
+        />
+        <div *ngIf="username?.invalid && (username?.dirty )" class="error-message">
+          <div *ngIf="username?.errors?.['required']">Имя пользователя обязательно</div>
+          <div *ngIf="username?.errors?.['minlength']">Минимум 3 символа</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Пароль</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="Введите ваш пароль"
+          [class.invalid]="password?.invalid && (password?.dirty)"
+        />
+        <div *ngIf="password?.invalid && (password?.dirty )" class="error-message">
+          <div *ngIf="password?.errors?.['required']">Пароль обязателен</div>
+          <div *ngIf="password?.errors?.['minlength']">Пароль должен быть минимум 6 символов</div>
+        </div>
+      </div>
+
+      <button type="submit" class="auth-button" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Войти</span>
+        <span *ngIf="isLoading">Вход...</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Ещё нет аккаунта? <a routerLink="/register">Зарегистрируйтесь</a></p>
+    </div>
+  </div>
+</div>

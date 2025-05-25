@@ -1,1 +1,90 @@
 /* You can add global styles to this file, and also import other style files */
+/* Глобальные стили для инпутов и кнопок */
+input, button, select, textarea {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+button {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.form-input.invalid {
+  border-color: #f44336;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Стили для уведомлений */
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 300px;
+}
+
+.notification {
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  color: white;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.notification.success {
+  background-color: #4CAF50;
+}
+
+.notification.error {
+  background-color: #F44336;
+}
+
+.notification-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}

@@ -1,49 +1,118 @@
+
 <div class="container">
-  <h2>Мои проекты</h2>
+  <div class="header-row">
+    <h2 class="page-title">Мои проекты</h2>
 
-  <div class="controls">
-    <button
-      *ngIf="!showCreateForm"
-      (click)="showCreateForm = true"
-      class="btn btn-primary"
-    >
-      + Создать проект
-    </button>
+    <div class="search-container">
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input [(ngModel)]="searchQuery"
+               type="text"
+               placeholder="Поиск проектов..."
+               class="search-input"
+               (keyup.enter)="applySearch()">
 
-    <div *ngIf="showCreateForm" class="create-form">
-      <input
-        type="text"
-        [(ngModel)]="newProjectName"
-        placeholder="Название проекта"
-        class="form-input"
-      >
-      <div class="form-actions">
-        <button (click)="showCreateForm = false" class="btn btn-secondary">
-          Отмена
+        <button (click)="applySearch()" class="btn btn-search">
+          <i class="fas fa-search"></i> Найти
         </button>
-        <button (click)="createProject()" class="btn btn-primary">
-          Создать
+
+        <button *ngIf="searchQuery"
+                (click)="clearSearch()"
+                class="btn btn-clear">
+          <i class="fas fa-times"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <div class="projects-grid">
-    <div
-      *ngFor="let project of projects"
-      (click)="navigateToProject(project.id)"
-      class="project-card"
-    >
-      <h3>{{ project.name }}</h3>
-      <div class="project-meta">
-        <span>Колонок: {{ project.taskStates.length }}</span>
-        <button
-          (click)="deleteProject(project.id, $event)"
-          class="btn btn-danger"
-        >
-          Удалить
+  <div class="controls">
+    <button *ngIf="!showCreateForm"
+            (click)="showCreateForm = true"
+            class="btn btn-primary create-btn">
+      <i class="fas fa-plus"></i> Создать проект
+    </button>
+
+    <div *ngIf="showCreateForm" class="create-form card">
+      <h3 class="form-title">Новый проект</h3>
+      <div class="form-group">
+        <label class="form-label">Название проекта</label>
+        <input type="text"
+               [(ngModel)]="newProjectName"
+               placeholder="Введите название"
+               class="form-input">
+      </div>
+      <div class="form-actions">
+        <button (click)="showCreateForm = false" class="btn btn-outline">
+          Отмена
+        </button>
+        <button (click)="createProject()" class="btn btn-primary">
+          Создать проект
         </button>
       </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-indicator">
+    <i class="fas fa-spinner fa-spin"></i> Загрузка проектов...
+  </div>
+
+  <div class="projects-grid">
+    <div *ngFor="let project of filteredProjects" class="project-card card">
+      <div class="card-body">
+        <div class="project-card-header">
+          <h3 class="project-title">{{ project.name }}</h3>
+        </div>
+
+        <div class="project-meta">
+          <div class="meta-item">
+            <i class="fas fa-calendar-alt meta-icon"></i>
+            <div>
+              <div class="meta-label">Создан</div>
+              <div class="meta-value">{{ project.create_at | date:'dd.MM.yyyy'}}</div>
+            </div>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-sync-alt meta-icon"></i>
+            <div>
+              <div class="meta-label">Обновлён</div>
+              <div class="meta-value">{{ project.update_at | date:'dd.MM.yyyy' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer" style="margin-top: 10px">
+        <button (click)="navigateToProject(project.id); $event.stopPropagation()"
+                class="btn btn-outline">
+          <i class="fas fa-folder-open"></i> Открыть
+        </button>
+        <button (click)="deleteProject(project.id, $event)"
+                class="btn btn-outline" style="color:red; border-color: red" >
+          <i class="fas fa-folder-open">Удалить проект</i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isSearching && filteredProjects.length === 0 && !loading" class="empty-search">
+    <i class="fas fa-search"></i>
+    <p>По запросу "{{ searchQuery }}" ничего не найдено</p>
+    <button (click)="clearSearch()" class="btn btn-link">
+      Показать все проекты
+    </button>
+  </div>
+
+  <!-- Исправьте это условие: -->
+  <div *ngIf="filteredProjects.length === 0 && !loading && !isSearching" class="empty-state card">
+    <i class="fas fa-folder-open empty-icon"></i>
+    <h3>Нет проектов</h3>
+    <p>У вас пока нет ни одного проекта. Начните с создания нового!</p>
+  </div>
+
+  <div class="notification-container">
+    <div *ngFor="let notification of notificationService.getNotifications()"
+         class="notification notification-{{notification.type}}">
+      {{notification.message}}
     </div>
   </div>
 </div>

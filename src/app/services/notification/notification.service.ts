@@ -1,19 +1,39 @@
+// notification.service.ts
 import {Injectable} from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  notifications: {id: number, message: string, type: 'success' | 'error'}[] = [];
+  notifications: any[] = [];
   private nextId = 0;
 
-  show(message: string, type: 'success' | 'error' = 'success'): void {
-    const id = this.nextId++;
-    this.notifications.push({id, message, type});
-    setTimeout(() => this.remove(id), 5000);
+  getNotifications() {
+    return this.notifications;
   }
 
-  private remove(id: number): void {
-    this.notifications = this.notifications.filter(n => n.id !== id);
+  show(message: string, type: 'success' | 'error' = 'success') {
+    const id = this.nextId++;
+    const notification = {
+      id,
+      message,
+      type,
+      state: 'in'
+    };
+    this.notifications.push(notification);
+
+    setTimeout(() => {
+      this.remove(id);
+    }, 5000);
+  }
+
+  remove(id: number) {
+    const notification = this.notifications.find(n => n.id === id);
+    if (notification) {
+      notification.state = 'void';
+      setTimeout(() => {
+        this.notifications = this.notifications.filter(n => n.id !== id);
+      }, 300); // Должно совпадать с длительностью анимации
+    }
   }
 }

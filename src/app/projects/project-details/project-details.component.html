@@ -1,12 +1,12 @@
 <div class="container">
-  <div class="notifications-container">
-    <div *ngFor="let notification of notificationService.notifications"
+  <div class="notification-container">
+    <div *ngFor="let notification of notificationService.getNotifications()"
          class="notification notification-{{notification.type}}">
       {{notification.message}}
+      <button (click)="notificationService.remove(notification.id)">×</button>
     </div>
   </div>
 
-  <!-- Шапка проекта -->
   <div *ngIf="project; else notFound" class="project-header">
     <div class="header-content">
       <h2>{{ project.name }}</h2>
@@ -16,8 +16,8 @@
     </div>
 
     <div class="meta">
-      <span>Создан: {{ project.createdAt | date:'dd.MM.yyyy' }}</span>
-      <span>Обновлен: {{ project.updatedAt | date:'dd.MM.yyyy' }}</span>
+      <span>Создан: {{ project.create_at | date:'dd.MM.yyyy'}}</span>
+      <span>Обновлен: {{ project.update_at | date:'dd.MM.yyyy' }}</span>
     </div>
 
     <button (click)="showTaskStateModal = true" class="btn btn-add">
@@ -25,14 +25,32 @@
     </button>
   </div>
 
-  <!-- Колонки задач -->
-  <ng-container *ngIf="project">
-    <h3 *ngIf="project.taskStates.length > 0">Колонки задач</h3>
+  <div *ngIf="project">
+    <h3 *ngIf="taskStates.length > 0">Колонки задач</h3>
 
-    <div *ngIf="project.taskStates.length > 0" class="task-states">
-      <div *ngFor="let state of project.taskStates" class="task-state">
-        <div class="state-header">
-          <h4>{{ state.name }} ({{ layoutMap[state.typeOfLayout] }})</h4>
+    <div
+      cdkDropList
+      [cdkDropListData]="taskStates"
+      (cdkDropListDropped)="onTaskStateDrop($event)"
+      class="task-states-container"
+      [cdkDropListConnectedTo]="[]"
+    >
+      <div *ngFor="let state of taskStates; let i = index"
+           cdkDrag
+           [cdkDragData]="state"
+           (cdkDragStarted)="onDragStarted($event, 'state')"
+           (cdkDragEnded)="onDragEnded('state')"
+           class="task-state"
+           [class.drag-active]="isDraggingStates"
+           style="min-width: 250px;">
+        <div class="state-header" cdkDragHandle>
+          <div class="drag-handle">
+            <svg width="12" height="12" viewBox="0 0 24 24">
+              <path d="M9 5h2v2H9zm0 4h2v2H9zm0 4h2v2H9zm4-8h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2z"/>
+            </svg>
+          </div>
+          <h4 class="state-title">{{ state.name }}</h4>
+          <span class="layout-indicator">{{ layoutMap[state.typeOfLayout] }}</span>
           <div class="state-actions">
             <button (click)="openEditTaskStateModal(state)" class="btn btn-edit">
               Редактировать
@@ -47,34 +65,35 @@
           Добавить задачу
         </button>
 
-        <div *ngIf="state.tasks && state.tasks.length > 0" class="tasks-list">
+        <div
+          cdkDropList
+          [id]="'tasks-' + state.id"
+          [cdkDropListData]="state.tasks || []"
+          [cdkDropListConnectedTo]="getConnectedTaskLists()"
+          (cdkDropListDropped)="onTaskDrop($event)"
+          class="tasks-list"
+          [class.drag-active]="isDraggingTasks"
+        >
           <div *ngFor="let task of state.tasks"
-               class="task task-{{task.priority.toLowerCase()}}-priority"
-               (click)="openTaskDetails(task)">
-            <div class="task-content">
-              <h5 class="task-title">{{ task.title }}</h5>
-              <p class="task-description">{{ task.description || 'Нет описания' }}</p>
-
-              <div class="task-info">
-                <span class="task-category">{{ categoryMap[task.category] }}</span>
-                <span class="task-priority priority-{{task.priority.toLowerCase()}}">
-                  {{ priorityMap[task.priority] }}
-                </span>
-              </div>
-
-              <div *ngIf="task.deadline" class="deadline">
-                <span class="deadline-icon"></span> {{ task.deadline | date:'dd.MM.yyyy' }}
-              </div>
+               cdkDrag
+               [cdkDragData]="task"
+               (cdkDragStarted)="onDragStarted($event, 'task')"
+               (cdkDragEnded)="onDragEnded('task')"
+               class="task-card"
+               [class.drag-active]="isDraggingTasks"
+               [class.task-priority-{{task.priority.toLowerCase()}}]=""
+                (click)="!isDraggingTasks && openTaskDetails($event, task)">
+            <div class="drag-handle" cdkDragHandle>
+              <svg width="12" height="12" viewBox="0 0 24 24">
+                <path d="M9 5h2v2H9zm0 4h2v2H9zm0 4h2v2H9zm4-8h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2z"/>
+              </svg>
             </div>
-
-            <div class="task-actions">
-              <button
-                (click)="deleteTask(state.id, task.id, $event)"
-                class="btn btn-delete btn-sm"
-              >
-                Удалить
-              </button>
-            </div>
+            <h5>{{ task.title }}</h5>
+            <p>{{ task.description }}</p>
+            <small>Дедлайн: {{ task.deadline | date:'dd.MM.yyyy' }}</small>
+            <button class="btn btn-delete-task" (click)="deleteTask(task.id, $event)">
+              Удалить
+            </button>
           </div>
         </div>
 
@@ -83,9 +102,7 @@
         </div>
       </div>
     </div>
-  </ng-container>
-
-  <!-- Проект не найден -->
+  </div>
   <ng-template #notFound>
     <div class="empty-state">
       <h3>Проект не найден</h3>
@@ -213,7 +230,12 @@
 
       <div class="form-group">
         <label>Дедлайн</label>
-        <input type="date" [(ngModel)]="newTask.deadline" class="form-input">
+        <input
+          type="date"
+          [(ngModel)]="newTask.deadline"
+          class="form-input"
+          [ngModelOptions]="{standalone: true}"
+        >
       </div>
 
       <div class="modal-actions">

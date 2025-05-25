@@ -1,13 +1,19 @@
 <header>
   <div class="header-content">
-    <h1>📋 Управление проектами</h1>
+    <h1>Сетевой-трекер задач и привычек</h1>
     <nav>
-      <a routerLink="/" routerLinkActive="active">🏠 Проекты</a>
-      <a href="#" style="margin-left: auto;">👤 Профиль</a>
+      <a routerLink="/projects" *ngIf="authService.isLoggedIn">Проекты</a>
+      <a routerLink="/habits" *ngIf="authService.isLoggedIn">Привычки</a>
+      <div class="user-info" *ngIf="authService.isLoggedIn">
+        <span>{{ authService.currentUserValue?.username }}</span>
+        <button (click)="logout()">Выйти</button>
+      </div>
     </nav>
   </div>
 </header>
 
 <main>
+  <app-notification></app-notification>
   <router-outlet></router-outlet>
 </main>
+

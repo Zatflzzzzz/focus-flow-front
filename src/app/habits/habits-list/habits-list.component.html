@@ -1,0 +1,78 @@
+<div class="container">
+  <div class="notification-container">
+    <div *ngFor="let notification of notificationService.getNotifications()"
+         class="notification notification-{{notification.type}}">
+      {{notification.message}}
+      <button (click)="notificationService.remove(notification.id)">×</button>
+    </div>
+  </div>
+
+  <div class="habits-header">
+    <h1>Мои привычки</h1>
+    <button (click)="showCreateHabitModal = true" class="btn btn-add">
+      + Новая привычка
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Загрузка привычек...</p>
+  </div>
+
+  <div *ngIf="!isLoading && habits.length === 0" class="empty-state">
+    <p>У вас пока нет привычек</p>
+    <button (click)="showCreateHabitModal = true" class="btn btn-primary">
+      + Создать первую привычку
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && habits.length > 0" class="habits-grid">
+    <div *ngFor="let habit of habits" class="habit-card" (click)="viewHabitDetails(habit.id)">
+      <div class="habit-header">
+        <h3>{{ habit.title }}</h3>
+        <span class="time" style="font-size:14px; color:gray; margin-left:5px;"> Время на выполнение: {{ habit.timeToComplete }}</span>
+      </div>
+      <p class="description" style="color:black"> Описание: {{ habit.description || 'Нет описания' }}</p>
+      <div class="habit-footer">
+        <span class="due-date">До: {{ formatDate(habit.dueDate) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showCreateHabitModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Создать новую привычку</h3>
+
+      <div class="form-group">
+        <label>Название привычки *</label>
+        <input type="text" [(ngModel)]="newHabit.title" class="form-input" required>
+      </div>
+
+      <div class="form-group">
+        <label>Описание</label>
+        <textarea [(ngModel)]="newHabit.description" class="form-textarea"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Время выполнения *</label>
+          <input type="time" [(ngModel)]="newHabit.timeToComplete" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label>Дата окончания *</label>
+          <input type="date" [(ngModel)]="newHabit.dueDate" class="form-input" required>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="cancelHabitCreation()" class="btn btn-cancel">
+          Отмена
+        </button>
+        <button (click)="createHabit()" class="btn btn-confirm" [disabled]="!newHabit.title">
+          Создать
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,196 +1,204 @@
 import {Injectable} from '@angular/core';
-import {Project} from '../../projects/models/project.model';
-import {Layouts} from '../../projects/models/enums/layouts.enum';
-import {TaskState} from '../../projects/models/task-state.model';
-import {Task} from '../../projects/models/task.model';
-import {Priority} from '../../projects/models/enums/priority.enum';
-import {Category} from '../../projects/models/enums/category.enum';
+import {HttpClient} from '@angular/common/http';
+import {catchError, Observable, of} from 'rxjs';
+import {Project} from '../../models/project.model';
+import {Layouts} from '../../models/enums/layouts.enum';
+import {TaskState} from '../../models/task-state.model';
+import {Task} from '../../models/task.model';
+import {Priority} from '../../models/enums/priority.enum';
+import {Category} from '../../models/enums/category.enum';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProjectService {
-  private projects: Project[] = [];
-  private lastId = 1;
+  private gatewayUrl = 'http://localhost:3246';
 
-  constructor() {
-    this.initializeSampleData();
-  }
-
-  private initializeSampleData(): void {
-    const sampleProject: Project = {
-      id: 1,
-      name: 'Мой первый проект',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: 1,
-      taskStates: [
-        {
-          id: 1,
-          name: 'To Do',
-          typeOfLayout: Layouts.BOARD,
-          createdAt: new Date(),
-          project: null as any,
-          tasks: []
-        },
-        {
-          id: 2,
-          name: 'In Progress',
-          typeOfLayout: Layouts.BOARD,
-          createdAt: new Date(),
-          project: null as any,
-          tasks: []
-        }
-      ]
-    };
-    this.projects.push(sampleProject);
-    this.lastId = 2;
-  }
+  constructor(private http: HttpClient) {}
 
   // Project methods
-  getProjects(): Project[] {
-    return this.projects;
+  getProjects(): Observable<Project[]> {
+    return this.http.get<Project[]>(`${this.gatewayUrl}/api/projects`);
   }
 
-  getProjectById(id: number): Project | undefined {
-    return this.projects.find(p => p.id === id);
+  getProjectById(id: number): Observable<Project> {
+    return this.http.get<Project>(`${this.gatewayUrl}/api/projects/${id}`);
   }
 
-  createProject(name: string, userId: number): Project {
-    const newProject: Project = {
-      id: ++this.lastId,
-      name,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId,
-      taskStates: []
+  searchProjects(prefix: string): Observable<Project[]> {
+    return this.http.get<Project[]>(`${this.gatewayUrl}/api/projects`, {
+      params: { prefix_name: prefix }
+    }).pipe(
+      catchError(error => {
+        console.error('Search error:', error);
+        return of([]);
+      })
+    );
+  }
+
+  createOrUpdateProject(id: number | null, name: string): Observable<Project> {
+    const params: any = { project_name: name };
+    if (id) {
+      params.project_id = id.toString();
+    }
+    return this.http.put<Project>(`${this.gatewayUrl}/api/projects`, null, { params });
+  }
+
+  deleteProject(id: number): Observable<any> {
+    return this.http.delete(`${this.gatewayUrl}/api/projects/${id}`);
+  }
+
+  getTaskStates(projectId: number): Observable<TaskState[]> {
+    return this.http.get<TaskState[]>(
+      `${this.gatewayUrl}/api/projects/${projectId}/tasks-states`
+    ).pipe(
+      catchError(error => {
+        console.error('Error loading task states:', error);
+        return of([]);
+      })
+    );
+  }
+
+  createTaskState(projectId: number, name: string, layout: Layouts): Observable<TaskState> {
+    return this.http.post<TaskState>(
+      `${this.gatewayUrl}/api/projects/${projectId}/tasks-states`,
+      null,
+      {
+        params : {
+          task_state_name: name,
+          type_of_layout: layout
+        }
+      }
+    ).pipe(
+      catchError(error => {
+        console.error('Error creating task state:', error);
+        throw error;
+      })
+    );
+  }
+
+  updateTaskState(taskStateId: number, name: string, layout: Layouts | string): Observable<TaskState> {
+    // Convert layout to string if it's an enum value
+    const layoutString = typeof layout === 'string' ? layout : Layouts[layout];
+
+    return this.http.patch<TaskState>(
+      `${this.gatewayUrl}/api/tasks-states/${taskStateId}`,
+      null,
+      {
+        params: {
+          task_state_name: name,
+          type_of_layout: layoutString
+        }
+      }
+    ).pipe(
+      catchError(error => {
+        console.error('Error updating task state:', error);
+        throw error;
+      })
+    );
+  }
+
+  changeTaskStatePosition(taskStateId: number, rightTaskStateId?: number): Observable<TaskState> {
+    const params: any = {};
+    if (rightTaskStateId) {
+      params.right_task_state_id = rightTaskStateId;
+    }
+    return this.http.patch<TaskState>(
+      `${this.gatewayUrl}/api/tasks-states/${taskStateId}/position/change`,
+      null,
+      { params }
+    );
+  }
+
+  deleteTaskState(taskStateId: number): Observable<any> {
+    return this.http.delete(`${this.gatewayUrl}/api/tasks-states/${taskStateId}`);
+  }
+
+  getTasks(taskStateId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.gatewayUrl}/api/task-state/${taskStateId}/tasks`);
+  }
+
+  createTask(
+    taskStateId: number,
+    title: string,
+    description: string,
+    deadline: string | Date,
+    category: Category,
+    priority: Priority
+  ): Observable<Task> {
+    // Форматируем дату в ISO 8601 без Z и без миллисекунд (LocalDateTime формат)
+    const formatDeadline = (d: Date): string => {
+      const pad = (n: number): string => n.toString().padStart(2, '0');
+
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+        `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
-    this.projects.push(newProject);
-    return newProject;
-  }
 
-  updateProject(id: number, name: string): Project | undefined {
-    const project = this.projects.find(p => p.id === id);
-    if (project) {
-      project.name = name;
-      project.updatedAt = new Date();
-      return project;
-    }
-    return undefined;
-  }
+    const deadlineStr = deadline instanceof Date ? formatDeadline(deadline) : deadline;
 
-  deleteProject(id: number): boolean {
-    const index = this.projects.findIndex(p => p.id === id);
-    if (index !== -1) {
-      this.projects.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
-  // TaskState methods
-  addTaskState(projectId: number, name: string, layout: Layouts): TaskState | undefined {
-    const project = this.projects.find(p => p.id === projectId);
-    if (!project) return undefined;
-
-    const newTaskState: TaskState = {
-      id: ++this.lastId,
-      name,
-      typeOfLayout: layout,
-      createdAt: new Date(),
-      project: project,
-      tasks: []
-    };
-    project.taskStates.push(newTaskState);
-    project.updatedAt = new Date();
-    return newTaskState;
-  }
-
-  updateTaskState(projectId: number, stateId: number, name: string, layout: Layouts): TaskState | undefined {
-    const state = this.projects
-      .find(p => p.id === projectId)
-      ?.taskStates.find(ts => ts.id === stateId);
-
-    if (state) {
-      state.name = name;
-      state.typeOfLayout = layout; // ← Добавлено обновление layout
-      return state;
-    }
-    return undefined;
-  }
-
-
-  deleteTaskState(projectId: number, stateId: number): boolean {
-    const project = this.projects.find(p => p.id === projectId);
-    if (!project) return false;
-
-    const index = project.taskStates.findIndex(ts => ts.id === stateId);
-    if (index !== -1) {
-      project.taskStates.splice(index, 1);
-      project.updatedAt = new Date();
-      return true;
-    }
-    return false;
-  }
-
-  // Task methods
-  addTask(projectId: number, stateId: number, task: Omit<Task, 'id' | 'taskState' | 'createdAt' | 'updatedAt'>): Task | undefined {
-    const state = this.projects
-      .find(p => p.id === projectId)
-      ?.taskStates.find(ts => ts.id === stateId);
-
-    if (!state) return undefined;
-
-    const newTask: Task = {
-      id: ++this.lastId,
-      ...task,
-      taskState: state,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    state.tasks.push(newTask);
-    return newTask;
+    return this.http.post<Task>(
+      `${this.gatewayUrl}/api/task-state/${taskStateId}/tasks`,
+      null,
+      {
+        params: {
+          title,
+          description,
+          deadline: deadlineStr,
+          category: category.toString(),
+          priority: priority.toString()
+        }
+      }
+    );
   }
 
   updateTask(
-    projectId: number, stateId: number, taskId: number, updatedData: {
-      title: string;
-      description: string;
-      deadline: Date;
-      priority: Priority;
-      category: Category;
-    } ): Task | undefined {
-    const task = this.projects
-      .find(p => p.id === projectId)
-      ?.taskStates.find(ts => ts.id === stateId)
-      ?.tasks.find(t => t.id === taskId);
+    taskId: number,
+    title: string,
+    description: string,
+    deadline: Date,
+    category: Category,
+    priority: Priority
+  ): Observable<Task> {
+    const formatDeadline = (d: Date): string => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
 
-    if (task) {
-      task.title = updatedData.title;
-      task.description = updatedData.description;
-      task.deadline = updatedData.deadline;
-      task.priority = updatedData.priority;
-      task.category = updatedData.category;
-      task.updatedAt = new Date();
-      return task;
-    }
-    return undefined;
+    const formattedDeadline = formatDeadline(deadline);
+
+    return this.http.patch<Task>(
+      `${this.gatewayUrl}/api/tasks/${taskId}`,
+      null,
+      {
+        params: {
+          title: title.trim(),
+          description: description || '',
+          deadline: formattedDeadline,
+          category: category.toString(),
+          priority: priority.toString()
+        }
+      }
+    ).pipe(
+      catchError(error => {
+        console.error('Error updating task:', error);
+        throw error;
+      })
+    );
   }
 
-
-  deleteTask(projectId: number, stateId: number, taskId: number): boolean {
-    const state = this.projects
-      .find(p => p.id === projectId)
-      ?.taskStates.find(ts => ts.id === stateId);
-
-    if (!state) return false;
-
-    const index = state.tasks.findIndex(t => t.id === taskId);
-    if (index !== -1) {
-      state.tasks.splice(index, 1);
-      return true;
+  changeTaskPosition(taskId: number, lowerTaskId?: number): Observable<Task> {
+    const params: any = {};
+    if (lowerTaskId) {
+      params.lower_task_id = lowerTaskId;
     }
-    return false;
+    return this.http.patch<Task>(
+      `${this.gatewayUrl}/api/tasks/${taskId}/position/change`,
+      null,
+      { params }
+    );
+  }
+
+  deleteTask(taskId: number): Observable<any> {
+    return this.http.delete(`${this.gatewayUrl}/api/tasks/${taskId}`);
   }
 }

@@ -1,0 +1,115 @@
+<!-- register.component.html -->
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Регистрация</h2>
+      <p>Создайте аккаунт для доступа к системе</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="register()" class="auth-form" novalidate>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="Введите ваш email"
+          [class.invalid]="formControls['email'].invalid && (formControls['email'].dirty)"
+        >
+        <div *ngIf="formControls['email'].invalid && (formControls['email'].dirty)" class="error-message">
+          <div *ngIf="formControls['email'].errors?.['required']">Email обязателен</div>
+          <div *ngIf="formControls['email'].errors?.['email']">Неверный формат email</div>
+          <div *ngIf="formControls['email'].errors?.['minlength']">Email должен быть минимум 6 символов</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Пароль</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="Создайте пароль"
+          [class.invalid]="formControls['password'].invalid && (formControls['password'].dirty)"
+        >
+        <div *ngIf="formControls['password'].invalid && (formControls['password'].dirty)" class="error-message">
+          <div *ngIf="formControls['password'].errors?.['required']">Пароль обязателен</div>
+          <div *ngIf="formControls['password'].errors?.['minlength']">Пароль должен содержать минимум 6 символов</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Имя пользователя</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-input"
+          placeholder="Придумайте username"
+          [class.invalid]="formControls['username'].invalid && (formControls['username'].dirty)"
+        >
+        <div *ngIf="formControls['username'].invalid && (formControls['username'].dirty)" class="error-message">
+          <div *ngIf="formControls['username'].errors?.['required']">Имя пользователя обязательно</div>
+          <div *ngIf="formControls['username'].errors?.['minlength']">Минимум 3 символа</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">Имя</label>
+          <input
+            type="text"
+            id="firstName"
+            formControlName="firstName"
+            class="form-input"
+            placeholder="Ваше имя"
+            [class.invalid]="formControls['firstName'].invalid && ( formControls['firstName'].dirty)"
+          >
+          <div *ngIf="formControls['firstName'].invalid && ( formControls['firstName'].dirty)" class="error-message">
+            Имя обязательно
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Фамилия</label>
+          <input
+            type="text"
+            id="lastName"
+            formControlName="lastName"
+            class="form-input"
+            placeholder="Ваша фамилия"
+            [class.invalid]="formControls['lastName'].invalid && ( formControls['lastName'].dirty)"
+          >
+          <div *ngIf="formControls['lastName'].invalid && ( formControls['lastName'].dirty)" class="error-message">
+            Фамилия обязательна
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="telegramLink">Telegram</label>
+        <input
+          type="url"
+          id="telegramLink"
+          formControlName="telegramLink"
+          class="form-input"
+          placeholder="Ссылка на Telegram (необязательно)"
+          [class.invalid]="formControls['telegramLink'].invalid && (formControls['telegramLink'].dirty)"
+        >
+        <div *ngIf="formControls['telegramLink'].invalid && (formControls['telegramLink'].dirty)" class="error-message">
+          Введите корректную ссылку на Telegram (например, https://t.me/username)
+        </div>
+      </div>
+
+      <button type="submit" class="auth-button" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Зарегистрироваться</span>
+        <span *ngIf="isLoading">Регистрация...</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Уже есть аккаунт? <a routerLink="/login">Войдите</a></p>
+    </div>
+  </div>
+</div>
