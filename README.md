@@ -1,59 +1,31 @@
-# Kursovaya
+# Как реализовано сетевое взаимодействие в проекте
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.11.
+      В проекте реализовано кастомное сетевое взаимодействие для работы с аутентификацией без использования
+      специализированных HTTP-клиентов вроде HttpClient из Angular или axios.
+      
+      Вся логика запросов выстроена на базе нативного Fetch API,
+      что дает полный контроль над процессом обработки HTTP-запросов и ответов.
+      
+      Основной механизм работы сосредоточен в методе sendRequest,
+      который формирует параметры запроса, добавляет необходимые заголовки (включая авторизационный токен) 
+      и обрабатывает ошибки сети. Для управления токенами доступа и обновления используется localStorage в сочетании с системой событий.
+      
+      Токены автоматически обновляются при приближении времени их истечения (за 30 секунд до окончания срока действия),
+      что реализовано через setTimeout и кастомное событие 'token-expiring'.
+      
+      Состояние аутентификации пользователя отслеживается через BehaviorSubject,
+      что позволяет компонентам реагировать на изменения в реальном времени.
+      
+      Все методы сервиса возвращают Observable, что обеспечивает согласованность с RxJS-подходом Angular.
+      
+      Отдельное внимание уделено обработке крайних случаев:
+      проверка наличия refresh-токена перед запросом обновления,
+      автоматический логаут при неудачном обновлении токена, очистка таймеров при выходе из системы.
+      
+      Сервис инкапсулирует всю логику работы с API аутентификации,
+      включая регистрацию, вход, выход и обновление токенов, предоставляя удобный интерфейс для компонентов приложения.
 
-## Development server
+Фото:
 
-To start a local development server, run:
+  ![изображение](https://github.com/user-attachments/assets/564aadf7-8f97-4e28-a3bf-5c10e2f7ef80)
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
